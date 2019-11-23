@@ -17,6 +17,7 @@ import java.io.*;
 public final class SaveHook implements FileDocumentManagerListener {
 
     private boolean debug = false;
+    private static final String mainUrl = "https://hackatum2019.herokuapp.com";
 
     private static String getRelativeFilepath(Document document) {
         VirtualFile currentFile = FileDocumentManager.getInstance().getFile(document);
@@ -60,8 +61,11 @@ public final class SaveHook implements FileDocumentManagerListener {
         if (inbetweenStrings(res, "\"status\": \"", "\"").equals("OK") || inbetweenStrings(res, "\"user_id\": \"", "\"").equals(user_id)) {
             try {
                 res = putEdit(repository_id, commit_id, file_id, user_id);
-                String message = "Uncommitted change of " + user_id + " in " + file_id + " signed.";
-                Notifications.Bus.notify(new Notification("onSaveHook", "Change in project base", message, NotificationType.INFORMATION));
+
+                String userString =  makeLink(user_id, mainUrl);
+                String fileString =  makeLink(file_id, mainUrl);
+                String message = "Uncommitted change of " + userString + " in " + fileString + " signed.";
+                Notifications.Bus.notify(new Notification("onSaveHook", "Change in project base", message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -69,10 +73,17 @@ public final class SaveHook implements FileDocumentManagerListener {
         //  Notification
         else {
 
-            String time = inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[0] + ":" + inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[1];
-            String message = "The file <a href=\"\">" + inbetweenStrings(res, "\"file_id\": \"", "\"").replace("___", "/") +
-                    "</a> has an uncommitted change from <a href=\"\">" + time + "</a> by <a href=\"\">" +
-                    inbetweenStrings(res, "\"user_id\": \"", "\"") + "</a>";
+            String timeString = makeLink(
+                    inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[0]
+                    + ":" + inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[1],
+                    mainUrl);
+
+            String fileString = makeLink(inbetweenStrings(res, "\"file_id\": \"", "\"").replace("___", "/"),
+                    mainUrl);
+
+            String message = "The file " + fileString +
+                    " has an uncommitted change from " + timeString + " by " +
+                    makeLink(inbetweenStrings(res, "\"user_id\": \"", "\""),mainUrl);
             Notifications.Bus.notify(
                     new Notification(
                             "onSaveHook",
@@ -82,12 +93,17 @@ public final class SaveHook implements FileDocumentManagerListener {
         }
     }
 
+    private static String makeLink(String string, String url){
+        return "<a href= " + url + ">" + string + "</a>";
+    }
+
 
     private static String putEdit(String repository, String commit, String file, String user) throws IOException, InterruptedException {
         file = file.replace("/", "___");
         String command =
                 "curl -X PUT \\\n" +
-                        "  https://hackatum2019.herokuapp.com/repository/" + repository + "/commit/" + commit + "/file/" + file + "/ \\\n" +
+                        mainUrl +
+                        "/repository/" + repository + "/commit/" + commit + "/file/" + file + "/ \\\n" +
                         "  -H 'cache-control: no-cache' \\\n" +
                         "  -H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \\\n" +
                         "  -F user_id=" + user;
@@ -110,7 +126,7 @@ public final class SaveHook implements FileDocumentManagerListener {
     private static String getEdit(String repository, String commit, String file) throws IOException, InterruptedException {
         file = file.replace("/", "___");
         String command =
-                "curl -X GET http://hackatum2019.herokuapp.com/repository/" + repository + "/commit/" + commit + "/file/" + file + "/";
+                "curl -X GET " + mainUrl + "/repository/" + repository + "/commit/" + commit + "/file/" + file + "/";
         return getString(command);
     }
 
