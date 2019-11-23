@@ -68,8 +68,10 @@ public final class SaveHook implements FileDocumentManagerListener {
         }
         //  Notification
         else {
+
+            String time = inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[0] + ":" + inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[1];
             String message = "The file <a href=\"\">" + inbetweenStrings(res, "\"file_id\": \"", "\"").replace("___", "/") +
-                    "</a> has an uncommitted change from <a href=\"\">" + inbetweenStrings(res, "\"timestamp\": \"", "\"") + "</a> by <a href=\"\">" +
+                    "</a> has an uncommitted change from <a href=\"\">" + time + "</a> by <a href=\"\">" +
                     inbetweenStrings(res, "\"user_id\": \"", "\"") + "</a>";
             Notifications.Bus.notify(
                     new Notification(
