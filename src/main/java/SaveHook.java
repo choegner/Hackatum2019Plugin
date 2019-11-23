@@ -35,16 +35,6 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 public final class SaveHook implements FileDocumentManagerListener {
-/*
-    public void beforeAllDocumentsSaving() {
-        Notifications.Bus.notify(
-                new Notification(
-                        "sample",
-                        "Hello Plugin!",
-                        "hello.",
-                        NotificationType.ERROR));
-    }
-*/
 
     public static String getRelativeFilepath(Document document) {
         VirtualFile currentFile = FileDocumentManager.getInstance().getFile(document);
@@ -64,9 +54,9 @@ public final class SaveHook implements FileDocumentManagerListener {
     }
 
     public void beforeDocumentSaving(@NotNull Document document) {
-        String repository_id = "plugin";
-        String commit_id = "master2";
-        String user_id = "Max";
+        String repository_id = "plugintest";
+        String commit_id = "master";
+        String user_id = "Christophers";
         String file_id = getRelativeFilepath(document);
 
         // GET request
@@ -78,21 +68,27 @@ public final class SaveHook implements FileDocumentManagerListener {
         }
 
         // PUT request
-        if (res.contains("OK") || res.contains(user_id)) {
+        //System.out.println(inbetweenStrings(res, "\"user_id\": \"", "\""));
+        //System.out.println(inbetweenStrings(res, "\"status\": \"", "\""));
+        if (inbetweenStrings(res, "\"status\": \"", "\"").equals("OK") || inbetweenStrings(res, "\"user_id\": \"", "\"").equals(user_id)) {
             try {
                 res = putEdit(repository_id, commit_id, file_id, user_id);
-                Notifications.Bus.notify(new Notification("onSaveHook", "Change in database", res, NotificationType.INFORMATION));
+                String message = "Uncommitted change of " + user_id + " in " + file_id + " signed.";
+                Notifications.Bus.notify(new Notification("onSaveHook", "Change in project base", message, NotificationType.INFORMATION));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         //  Notification
         else {
+            String message = "The file " + inbetweenStrings(res, "\"file_id\": \"", "\"").replace("___", "/") +
+                    " has an uncommitted change from " + inbetweenStrings(res, "\"timestamp\": \"", "\"") + " by " +
+                    inbetweenStrings(res, "\"user_id\": \"", "\"");
             Notifications.Bus.notify(
                     new Notification(
                             "onSaveHook",
                             "Attention",
-                            res,
+                            message,
                             NotificationType.WARNING));
         }
     }
@@ -130,5 +126,11 @@ public final class SaveHook implements FileDocumentManagerListener {
             output += line + '\n';
         }
         return output;
+    }
+
+    public static String inbetweenStrings(String input, String a, String b) {
+        int i_a = input.indexOf(a) + a.length();
+        int i_b = input.indexOf(b, i_a);
+        return input.substring(i_a, i_b);
     }
 }
