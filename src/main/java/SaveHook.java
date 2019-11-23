@@ -35,9 +35,9 @@ public final class SaveHook implements FileDocumentManagerListener {
     }
 
     public void beforeDocumentSaving(@NotNull Document document) {
-        String repository_id = "plugintest";
-        String commit_id = "master";
-        String user_id = "Christophers";
+        String repository_id = VCSInfo.getProjectId(document);
+        String commit_id = VCSInfo.getCommitId(document);
+        String user_id = VCSInfo.getUserId(document);
         String file_id = getRelativeFilepath(document);
 
         // GET request
