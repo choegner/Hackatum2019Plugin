@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>de.hackatum.nineteen.hackatum_plugin2019</id>
-    <name>Plugin display name here</name>
-    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+    <name>Merge in Peace</name>
+    <vendor>Merge in Peace</vendor>
 
     <description><![CDATA[
     Enter short description for your plugin here.<br>
@@ -17,12 +17,11 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
         <fileDocumentManagerListener id="your.implementation.id.here" implementation="SaveHook"/>
-        <typedHandler implementation="OwnTypedHandler"/>
     </extensions>
 
     <actions>
         <!-- Add your actions here -->
-        <group id="MyPlugin.SampleMenu" text="Greeting" description="Greeting menu">
+        <group id="MyPlugin.SampleMenu" text="Merge in Peace" description="Greeting menu">
             <add-to-group group-id="MainMenu" anchor="last"/>
             <action id="Myplugin.Textboxes" class="HelloAction" text="Hello" description="Says hello"/>
         </group>

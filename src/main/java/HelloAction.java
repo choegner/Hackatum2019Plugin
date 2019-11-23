@@ -4,11 +4,11 @@ import com.intellij.openapi.ui.Messages;
 
 public class HelloAction extends AnAction {
     public HelloAction() {
-        super("Hello");
+        super("Help");
     }
 
     public void actionPerformed(AnActionEvent event) {
         Project project = event.getProject();
-        Messages.showMessageDialog(project, "Hello world! :)", "Greeting", Messages.getInformationIcon());
+        Messages.showMessageDialog(project, "This tool helps you prevent merge conflicts, just look at the notifications when you save a file.", "Merge in Peace", Messages.getInformationIcon());
     }
 }

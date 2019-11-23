@@ -15,10 +15,11 @@ import java.io.*;
 
 public final class SaveHook implements FileDocumentManagerListener {
 
-    boolean debug = true;
+    private boolean debug = false;
 
-    public static String getRelativeFilepath(Document document) {
+    private static String getRelativeFilepath(Document document) {
         VirtualFile currentFile = FileDocumentManager.getInstance().getFile(document);
+        assert currentFile != null;
         String filePathAbsolute = currentFile.getPath();
 
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
@@ -29,15 +30,16 @@ public final class SaveHook implements FileDocumentManagerListener {
                 activeProject = project;
             }
         }
+        assert activeProject != null;
         String projectPathAbsolute = activeProject.getBasePath();
-        String filePathRelative = filePathAbsolute.replace(projectPathAbsolute, "");
-        return filePathRelative;
+        assert projectPathAbsolute != null;
+        return filePathAbsolute.replace(projectPathAbsolute, "");
     }
 
     public void beforeDocumentSaving(@NotNull Document document) {
         String repository_id = VCSInfo.getProjectId(document);
         String commit_id = VCSInfo.getCommitId(document);
-        String user_id = VCSInfo.getUserId(document);
+        String user_id = VCSInfo.getUserId();
         String file_id = getRelativeFilepath(document);
 
         // GET request
@@ -49,6 +51,7 @@ public final class SaveHook implements FileDocumentManagerListener {
         }
 
         // PUT request
+
         if (debug) {
             System.out.println(inbetweenStrings(res, "\"user_id\": \"", "\""));
             System.out.println(inbetweenStrings(res, "\"status\": \"", "\""));
@@ -77,7 +80,7 @@ public final class SaveHook implements FileDocumentManagerListener {
     }
 
 
-    public static String putEdit(String repository, String commit, String file, String user) throws IOException, InterruptedException {
+    private static String putEdit(String repository, String commit, String file, String user) throws IOException, InterruptedException {
         file = file.replace("/", "___");
         String command =
                 "curl -X PUT \\\n" +
@@ -85,33 +88,30 @@ public final class SaveHook implements FileDocumentManagerListener {
                         "  -H 'cache-control: no-cache' \\\n" +
                         "  -H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \\\n" +
                         "  -F user_id=" + user;
+        return getString(command);
+    }
+
+    @NotNull
+    private static String getString(String command) throws IOException, InterruptedException {
         Process p = Runtime.getRuntime().exec(command);
         p.waitFor();
         BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String output = "";
-        String line = "";
+        StringBuilder output = new StringBuilder();
+        String line;
         while ((line = reader.readLine()) != null) {
-            output += line + '\n';
+            output.append(line).append('\n');
         }
-        return output;
+        return output.toString();
     }
 
-    public static String getEdit(String repository, String commit, String file) throws IOException, InterruptedException {
+    private static String getEdit(String repository, String commit, String file) throws IOException, InterruptedException {
         file = file.replace("/", "___");
         String command =
                 "curl -X GET http://hackatum2019.herokuapp.com/repository/" + repository + "/commit/" + commit + "/file/" + file + "/";
-        Process p = Runtime.getRuntime().exec(command);
-        p.waitFor();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String output = "";
-        String line = "";
-        while ((line = reader.readLine()) != null) {
-            output += line + '\n';
-        }
-        return output;
+        return getString(command);
     }
 
-    public static String inbetweenStrings(String input, String a, String b) {
+    private static String inbetweenStrings(String input, String a, String b) {
         int i_a = input.indexOf(a) + a.length();
         int i_b = input.indexOf(b, i_a);
         return input.substring(i_a, i_b);
