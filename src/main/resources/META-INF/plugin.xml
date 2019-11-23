@@ -17,6 +17,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
         <fileDocumentManagerListener id="your.implementation.id.here" implementation="SaveHook"/>
+        <typedHandler implementation="OwnTypedHandler"/>
     </extensions>
 
     <actions>
