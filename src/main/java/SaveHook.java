@@ -1,40 +1,21 @@
-import com.android.aapt.Resources;
-import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.*;
-import java.net.*;
-import java.net.http.HttpClient;
-import java.net.http.HttpResponse;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringJoiner;
 
 public final class SaveHook implements FileDocumentManagerListener {
+
+    boolean debug = true;
 
     public static String getRelativeFilepath(Document document) {
         VirtualFile currentFile = FileDocumentManager.getInstance().getFile(document);
@@ -68,8 +49,10 @@ public final class SaveHook implements FileDocumentManagerListener {
         }
 
         // PUT request
-        //System.out.println(inbetweenStrings(res, "\"user_id\": \"", "\""));
-        //System.out.println(inbetweenStrings(res, "\"status\": \"", "\""));
+        if (debug) {
+            System.out.println(inbetweenStrings(res, "\"user_id\": \"", "\""));
+            System.out.println(inbetweenStrings(res, "\"status\": \"", "\""));
+        }
         if (inbetweenStrings(res, "\"status\": \"", "\"").equals("OK") || inbetweenStrings(res, "\"user_id\": \"", "\"").equals(user_id)) {
             try {
                 res = putEdit(repository_id, commit_id, file_id, user_id);
