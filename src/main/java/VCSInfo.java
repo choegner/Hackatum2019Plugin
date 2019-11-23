@@ -11,11 +11,12 @@ import java.io.IOException;
 
 public class VCSInfo {
 
-    static public String getCommitId() throws IOException {
+    static public String getCommitId(){
         Repository repository = buildRepo();
 
         return repository.getAllRefs().get("HEAD").getObjectId().toString().split("[\\[||\\]]")[1];
     }
+
 
     static public String getProjectId(){
         Repository repository = buildRepo();
@@ -38,7 +39,10 @@ public class VCSInfo {
         FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
         Repository repository = null;
         try {
-            repository = repositoryBuilder.setGitDir(new File(".git")).readEnvironment().findGitDir().setMustExist(true).build();
+            String path = System.getProperty("user.dir");
+            repositoryBuilder.setMustExist( true );
+            repositoryBuilder.setGitDir(new File(path + "/.git"));
+            repository = repositoryBuilder.build();
         } catch (IOException e){
             e.printStackTrace();
         }
