@@ -1,4 +1,5 @@
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.editor.Document;
@@ -67,15 +68,15 @@ public final class SaveHook implements FileDocumentManagerListener {
         }
         //  Notification
         else {
-            String message = "The file " + inbetweenStrings(res, "\"file_id\": \"", "\"").replace("___", "/") +
-                    " has an uncommitted change from " + inbetweenStrings(res, "\"timestamp\": \"", "\"") + " by " +
-                    inbetweenStrings(res, "\"user_id\": \"", "\"");
+            String message = "The file <a href=\"\">" + inbetweenStrings(res, "\"file_id\": \"", "\"").replace("___", "/") +
+                    "</a> has an uncommitted change from <a href=\"\">" + inbetweenStrings(res, "\"timestamp\": \"", "\"") + "</a> by <a href=\"\">" +
+                    inbetweenStrings(res, "\"user_id\": \"", "\"") + "</a>";
             Notifications.Bus.notify(
                     new Notification(
                             "onSaveHook",
                             "Attention",
                             message,
-                            NotificationType.WARNING));
+                            NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER));
         }
     }
 
