@@ -40,6 +40,8 @@ public final class SaveHook implements FileDocumentManagerListener {
     }
 
     public void beforeDocumentSaving(@NotNull Document document) {
+
+        //retrieve information
         String repository_id = VCSInfo.getProjectId(document);
         String commit_id = VCSInfo.getCommitId(document);
         String user_id = VCSInfo.getUserId();
@@ -63,31 +65,31 @@ public final class SaveHook implements FileDocumentManagerListener {
             System.out.println(inbetweenStrings(res, "\"user_id\": \"", "\""));
             System.out.println(inbetweenStrings(res, "\"status\": \"", "\""));
         }
-        if (inbetweenStrings(res, "\"status\": \"", "\"").equals("OK") || inbetweenStrings(res, "\"user_id\": \"", "\"").equals(user_id)) {
+        if (isOK(res) || sameUser(res, user_id)) {
             try {
-                res = putEdit(repository_id, commit_id, file_id, user_id);
-
+                putEdit(repository_id, commit_id, file_id, user_id);
 
                 String userString =  makeLink(user_id, commit_url);
                 String fileString =  makeLink(file_id, commit_url);
+
                 String message = "Uncommitted change of " + userString + " in " + fileString + " signed.";
-                Notifications.Bus.notify(new Notification("onSaveHook", "Change in project base", message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER));
+                Notifications.Bus.notify(
+                        new Notification("onSaveHook",
+                                "Change in project base",
+                                message, NotificationType.INFORMATION,
+                                NotificationListener.URL_OPENING_LISTENER));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         //  Notification
         else {
+            String timeString = makeLink(buildTimeString(res), commit_url);
 
-            String timeString = makeLink(
-                    inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[0]
-                    + ":" + inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[1],
+            String fileString = makeLink(buildFileString(res),
                     commit_url);
 
-            String fileString = makeLink(inbetweenStrings(res, "\"file_id\": \"", "\"").replace("___", "/"),
-                    commit_url);
-
-            String userString = makeLink(inbetweenStrings(res, "\"user_id\": \"", "\""),
+            String userString = makeLink(buildUserString(res),
                     commit_url);
 
             String message = "The file " + fileString +
@@ -108,7 +110,7 @@ public final class SaveHook implements FileDocumentManagerListener {
 
 
     private static String putEdit(String repository, String commit, String file, String user) throws IOException, InterruptedException {
-        file = file.replace("/", "___");
+        file = fileToUrl(file);
         String command =
                 "curl -X PUT \\\n" +
                         mainUrl +
@@ -133,7 +135,7 @@ public final class SaveHook implements FileDocumentManagerListener {
     }
 
     private static String getEdit(String repository, String commit, String file) throws IOException, InterruptedException {
-        file = file.replace("/", "___");
+        file = fileToUrl(file);
         String command =
                 "curl -X GET " + mainUrl + "/repository/" + repository + "/commit/" + commit + "/file/" + file + "/";
         return getString(command);
@@ -143,5 +145,35 @@ public final class SaveHook implements FileDocumentManagerListener {
         int i_a = input.indexOf(a) + a.length();
         int i_b = input.indexOf(b, i_a);
         return input.substring(i_a, i_b);
+    }
+
+    private static boolean isOK(String res){
+        return inbetweenStrings(res, "\"status\": \"", "\"").equals("OK");
+    }
+
+    private static boolean sameUser(String res, String user_id){
+        return inbetweenStrings(res, "\"user_id\": \"", "\"").equals(user_id);
+    }
+
+    private static String buildTimeString(String s){
+        String[] splittedTime = inbetweenStrings(s, "\"timestamp\": \"", "\"").split(":");
+
+        return splittedTime[0] + ":" + splittedTime[1];
+    }
+
+    private static String buildFileString(String s){
+        return urlToFile(inbetweenStrings(s, "\"file_id\": \"", "\""));
+    }
+
+    private static String buildUserString(String s){
+        return inbetweenStrings(s, "\"user_id\": \"", "\"");
+    }
+
+    private static String urlToFile(String s){
+        return s.replace("___", "/");
+    }
+
+    private static String fileToUrl(String s){
+        return s.replace("/","___");
     }
 }
