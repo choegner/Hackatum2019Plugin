@@ -18,6 +18,7 @@ public final class SaveHook implements FileDocumentManagerListener {
 
     private boolean debug = false;
     private static final String mainUrl = "https://hackatum2019.herokuapp.com";
+    private static final String visUrl = mainUrl + "/visual/";
 
     private static String getRelativeFilepath(Document document) {
         VirtualFile currentFile = FileDocumentManager.getInstance().getFile(document);
@@ -44,6 +45,10 @@ public final class SaveHook implements FileDocumentManagerListener {
         String user_id = VCSInfo.getUserId();
         String file_id = getRelativeFilepath(document);
 
+
+        String repository_url = visUrl + repository_id + "/" ;
+        String commit_url = repository_url + commit_id + "/";
+
         // GET request
         String res = "";
         try {
@@ -62,8 +67,9 @@ public final class SaveHook implements FileDocumentManagerListener {
             try {
                 res = putEdit(repository_id, commit_id, file_id, user_id);
 
-                String userString =  makeLink(user_id, mainUrl);
-                String fileString =  makeLink(file_id, mainUrl);
+
+                String userString =  makeLink(user_id, commit_url);
+                String fileString =  makeLink(file_id, commit_url);
                 String message = "Uncommitted change of " + userString + " in " + fileString + " signed.";
                 Notifications.Bus.notify(new Notification("onSaveHook", "Change in project base", message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER));
             } catch (Exception e) {
@@ -76,14 +82,17 @@ public final class SaveHook implements FileDocumentManagerListener {
             String timeString = makeLink(
                     inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[0]
                     + ":" + inbetweenStrings(res, "\"timestamp\": \"", "\"").split(":")[1],
-                    mainUrl);
+                    commit_url);
 
             String fileString = makeLink(inbetweenStrings(res, "\"file_id\": \"", "\"").replace("___", "/"),
-                    mainUrl);
+                    commit_url);
+
+            String userString = makeLink(inbetweenStrings(res, "\"user_id\": \"", "\""),
+                    commit_url);
 
             String message = "The file " + fileString +
                     " has an uncommitted change from " + timeString + " by " +
-                    makeLink(inbetweenStrings(res, "\"user_id\": \"", "\""),mainUrl);
+                    userString;
             Notifications.Bus.notify(
                     new Notification(
                             "onSaveHook",
